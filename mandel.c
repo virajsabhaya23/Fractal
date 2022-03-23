@@ -135,9 +135,16 @@ int main( int argc, char *argv[] )
 		argg[i].ymax = ycenter + scale;
 		argg[i].max = max;
 
-		//TODO:lower bound and upper bound
+		
 
 		pthread_create(&ThreadsArray[i], NULL, compute_image, (void*) &argg[i]);
+	}
+
+	//DELARING INT J OUTSIDE FOR LOOP BECAUSE OF SEGMENATATION FAULT
+	int j;
+	for(j = 0; j < NumOfThreads; j++ )
+	{ 
+		pthread_join( &ThreadsArray[j], NULL );
 	}
 
 	// Save the image in the stated file.
@@ -152,13 +159,6 @@ int main( int argc, char *argv[] )
 							( begin_time.tv_sec * 1000000 + begin_time.tv_usec );
 
 	printf("This code took %ld microseconds to execute\n", time_to_execute);
-
-	//DELARING INT J OUTSIDE FOR LOOP BECAUSE OF SEGMENATATION FAULT
-	int j;
-	for(j = 0; j < NumOfThreads; j++ )
-	{ 
-		pthread_join( &ThreadsArray[j], NULL );
-	}
 
 	return 0;
 }
