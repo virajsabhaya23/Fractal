@@ -1,6 +1,8 @@
 /* 
 	Viraj Sabhaya
 	UTA ID : 1001828871
+
+	NOTE: ALL CAPITALIZE COMMENTS ARE THE CHANGES I MADE :)
 */
 
 #include "bitmap.h"
@@ -19,6 +21,7 @@ int iterations_at_point( double x, double y, int max );
 void* compute_image(void* argg);
 
 //CREATED A STRUCTURE OF ALL THE PARAMETERS OF COMPUTE_IMAGE TO ASSIGN THE ARGS TO EACH THREAD
+//INCLUDES ALL THE PARAMETERS FROM COMPUTE_IMAGE
 struct arguments_of_threads{
 	struct bitmap *bm;
 	double xmin;
@@ -41,7 +44,7 @@ void show_help()
 	printf("-W <pixels>     Width of the image in pixels. (default=500)\n");
 	printf("-H <pixels>     Height of the image in pixels. (default=500)\n");
 	printf("-o <file>   	Set output file. (default=mandel.bmp)\n");
-	printf("-n <#threads>   Number of threads. (default=1)");
+	printf("-n <#threads>   Number of threads. (default=1)");	//THE THREAD HELP LINE
 	printf("-h              Show this help text.\n");
 	printf("\nSome examples are:\n");
 	printf("mandel -x -0.5 -y -0.5 -s 0.2\n");
@@ -62,12 +65,15 @@ int main( int argc, char *argv[] )
 	int    image_width = 500;
 	int    image_height = 500;
 	int    max = 1000;
+
 	//DEFAULT VALUE OF THE THREAD ASSIGNED TO 1.
 	int    NumOfThreads = 1;
 
+	//DECLARATION OF THE TIME VARIABLES
 	struct timeval begin_time;
   	struct timeval end_time;
 
+	//STARING OF THE INITIAL TIME AND THE PROCESS BEGINS...
 	gettimeofday( &begin_time, NULL );
 
 	// For each command line argument given,
@@ -116,16 +122,18 @@ int main( int argc, char *argv[] )
 	// Fill it with a dark blue, for debugging
 	bitmap_reset(bm,MAKE_RGBA(0,0,255,0));
 
+	//REMOVED THE COMPUTE_IMAGE FUNCTION BECAUSE IT IS CALLED UNDER THE PTHREAD_CREATE IN THE FOR LOOP BELOW... 
 	// Compute the Mandelbrot image
 
 	//INITIALIZE THE ARRAY OF THREADS.
 	pthread_t ThreadsArray[NumOfThreads];
 
-	// 
+	//WHEREAS THIS INITIALIZE THE THREAD PARAMETERS INTO THE THREADS.
 	struct arguments_of_threads argg[NumOfThreads];
 	
 	//DELARING INT I OUTSIDE FOR LOOP BECAUSE OF SEGMENATATION FAULT
 	int i;
+	//FOR LOOP FOR ASSIGNING THE VALUES INTO THE PARAMETERS AND IT ALSO CREATES THE THREAD WITH IT.
 	for(int i = 0;i < NumOfThreads;i++)
 	{
 		argg[i].bm = bm;
@@ -134,14 +142,14 @@ int main( int argc, char *argv[] )
 		argg[i].xmax = xcenter + scale;
 		argg[i].ymax = ycenter + scale;
 		argg[i].max = max;
-
 		
-
+		//THIS USES THE PTHREAD API AND IS RESPONSIBLE FOR CREATING THREADS.
 		pthread_create(&ThreadsArray[i], NULL, compute_image, (void*) &argg[i]);
 	}
 
 	//DELARING INT J OUTSIDE FOR LOOP BECAUSE OF SEGMENATATION FAULT
 	int j;
+	//THIS FOR LOOP BASICALLY ITERATES AND JOINS ALL THE THREAD RESULTS.
 	for(j = 0; j < NumOfThreads; j++ )
 	{ 
 		pthread_join( &ThreadsArray[j], NULL );
@@ -167,12 +175,11 @@ int main( int argc, char *argv[] )
 Compute an entire Mandelbrot image, writing each point to the given bitmap.
 Scale the image to the range (xmin-xmax,ymin-ymax), limiting iterations to "max"
 */
-// struct bitmap *bm, double xmin, double xmax, double ymin, double ymax, int max, int threads
 
-void* compute_image(void* argg)
+void* compute_image(void* argg)		//REMOVED THE FOLLOWING PARAMETERS : // struct bitmap *bm, double xmin, double xmax, double ymin, double ymax, int max, int threads
 {
 	int i,j;
-
+	
 	struct arguments_of_threads * NewArgg = (struct arguments_of_threads*) argg;
 
 	int width = bitmap_width(NewArgg->bm);
