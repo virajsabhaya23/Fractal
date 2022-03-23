@@ -1,3 +1,7 @@
+/* 
+	Viraj Sabhaya
+	UTA ID : 1001828871
+*/
 
 #ifndef BITMAP_H
 #define BITMAP_H

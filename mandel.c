@@ -7,27 +7,42 @@
 
 #include <getopt.h>
 #include <stdlib.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <math.h>
 #include <errno.h>
 #include <string.h>
+#include <pthread.h>
 
 int iteration_to_color( int i, int max );
 int iterations_at_point( double x, double y, int max );
-void compute_image( struct bitmap *bm, double xmin, double xmax, double ymin, double ymax, int max );
+void* compute_image(void* argg);
+
+//CREATED A STRUCTURE OF ALL THE PARAMETERS OF COMPUTE_IMAGE TO ASSIGN THE ARGS TO EACH THREAD
+struct arguments_of_threads{
+	struct bitmap *bm;
+	double xmin;
+	double xmax;
+	double ymin;
+	double ymax;
+	double xmin;
+	double xmax;
+	int max;
+};
 
 void show_help()
 {
 	printf("Use: mandel [options]\n");
 	printf("Where options are:\n");
-	printf("-m <max>    The maximum number of iterations per point. (default=1000)\n");
-	printf("-x <coord>  X coordinate of image center point. (default=0)\n");
-	printf("-y <coord>  Y coordinate of image center point. (default=0)\n");
-	printf("-s <scale>  Scale of the image in Mandlebrot coordinates. (default=4)\n");
-	printf("-W <pixels> Width of the image in pixels. (default=500)\n");
-	printf("-H <pixels> Height of the image in pixels. (default=500)\n");
-	printf("-o <file>   Set output file. (default=mandel.bmp)\n");
-	printf("-h          Show this help text.\n");
+	printf("-m <max>        The maximum number of iterations per point. (default=1000)\n");
+	printf("-x <coord>      X coordinate of image center point. (default=0)\n");
+	printf("-y <coord>      Y coordinate of image center point. (default=0)\n");
+	printf("-s <scale>      Scale of the image in Mandlebrot coordinates. (default=4)\n");
+	printf("-W <pixels>     Width of the image in pixels. (default=500)\n");
+	printf("-H <pixels>     Height of the image in pixels. (default=500)\n");
+	printf("-o <file>   	Set output file. (default=mandel.bmp)\n");
+	printf("-n <#threads>   Number of threads. (default=1)");
+	printf("-h              Show this help text.\n");
 	printf("\nSome examples are:\n");
 	printf("mandel -x -0.5 -y -0.5 -s 0.2\n");
 	printf("mandel -x -.38 -y -.665 -s .05 -m 100\n");
@@ -37,7 +52,6 @@ void show_help()
 int main( int argc, char *argv[] )
 {
 	char c;
-
 	// These are the default configuration values used
 	// if no command line arguments are given.
 
@@ -48,11 +62,19 @@ int main( int argc, char *argv[] )
 	int    image_width = 500;
 	int    image_height = 500;
 	int    max = 1000;
+	//DEFAULT VALUE OF THE THREAD ASSIGNED TO 1.
+	int    NumOfThreads = 1;
+
+	struct timeval begin_time;
+  	struct timeval end_time;
+
+	gettimeofday( &begin_time, NULL );
 
 	// For each command line argument given,
 	// override the appropriate configuration value.
 
-	while((c = getopt(argc,argv,"x:y:s:W:H:m:o:h"))!=-1) {
+	while((c = getopt(argc,argv,"x:y:s:W:H:m:o:n:h"))!=-1) 
+	{
 		switch(c) {
 			case 'x':
 				xcenter = atof(optarg);
@@ -75,6 +97,9 @@ int main( int argc, char *argv[] )
 			case 'o':
 				outfile = optarg;
 				break;
+			case 'n':
+				NumOfThreads = atoi(optarg);
+				break;
 			case 'h':
 				show_help();
 				exit(1);
@@ -83,7 +108,7 @@ int main( int argc, char *argv[] )
 	}
 
 	// Display the configuration of the image.
-	printf("mandel: x=%lf y=%lf scale=%lf max=%d outfile=%s\n",xcenter,ycenter,scale,max,outfile);
+	printf("mandel: x=%lf y=%lf scale=%lf max=%d outfile=%s NumThreads=%d\n", xcenter, ycenter, scale, max, outfile, NumOfThreads);
 
 	// Create a bitmap of the appropriate size.
 	struct bitmap *bm = bitmap_create(image_width,image_height);
@@ -92,12 +117,47 @@ int main( int argc, char *argv[] )
 	bitmap_reset(bm,MAKE_RGBA(0,0,255,0));
 
 	// Compute the Mandelbrot image
-	compute_image(bm,xcenter-scale,xcenter+scale,ycenter-scale,ycenter+scale,max);
+
+	//INITIALIZE THE ARRAY OF THREADS.
+	pthread_t ThreadsArray[NumOfThreads];
+
+	// 
+	struct arguments_of_threads argg[NumOfThreads];
+	
+	//DELARING INT I OUTSIDE FOR LOOP BECAUSE OF SEGMENATATION FAULT
+	int i;
+	for(int i = 0;i < NumOfThreads;i++)
+	{
+		argg[i].bm = bm;
+		argg[i].xmin = xcenter - scale;
+		argg[i].ymin = ycenter - scale;
+		argg[i].xmax = xcenter + scale;
+		argg[i].ymax = ycenter + scale;
+		argg[i].max = max;
+
+		//TODO:lower bound and upper bound
+
+		pthread_create(&ThreadsArray[i], NULL, compute_image, (void*) &argg[i]);
+	}
 
 	// Save the image in the stated file.
 	if(!bitmap_save(bm,outfile)) {
 		fprintf(stderr,"mandel: couldn't write to %s: %s\n",outfile,strerror(errno));
 		return 1;
+	}
+
+	gettimeofday( &end_time, NULL );
+
+	long time_to_execute = ( end_time.tv_sec * 1000000 + end_time.tv_usec ) -
+							( begin_time.tv_sec * 1000000 + begin_time.tv_usec );
+
+	printf("This code took %ld microseconds to execute\n", time_to_execute);
+
+	//DELARING INT J OUTSIDE FOR LOOP BECAUSE OF SEGMENATATION FAULT
+	int j;
+	for(j = 0; j < NumOfThreads; j++ )
+	{ 
+		pthread_join( &ThreadsArray[j], NULL );
 	}
 
 	return 0;
@@ -107,13 +167,16 @@ int main( int argc, char *argv[] )
 Compute an entire Mandelbrot image, writing each point to the given bitmap.
 Scale the image to the range (xmin-xmax,ymin-ymax), limiting iterations to "max"
 */
+// struct bitmap *bm, double xmin, double xmax, double ymin, double ymax, int max, int threads
 
-void compute_image( struct bitmap *bm, double xmin, double xmax, double ymin, double ymax, int max )
+void* compute_image(void* argg)
 {
 	int i,j;
 
-	int width = bitmap_width(bm);
-	int height = bitmap_height(bm);
+	struct arguments_of_threads * NewArgg = (struct arguments_of_threads*) argg;
+
+	int width = bitmap_width(NewArgg->bm);
+	int height = bitmap_height(NewArgg->bm);
 
 	// For every pixel in the image...
 
@@ -122,14 +185,14 @@ void compute_image( struct bitmap *bm, double xmin, double xmax, double ymin, do
 		for(i=0;i<width;i++) {
 
 			// Determine the point in x,y space for that pixel.
-			double x = xmin + i*(xmax-xmin)/width;
-			double y = ymin + j*(ymax-ymin)/height;
+			double x = (NewArgg->xmin) + i*((NewArgg->xmax)-(NewArgg->xmin))/width;
+			double y = (NewArgg->ymin) + j*((NewArgg->ymax)-(NewArgg->ymin))/height;
 
 			// Compute the iterations at that point.
-			int iters = iterations_at_point(x,y,max);
+			int iters = iterations_at_point(x,y,(NewArgg->max));
 
 			// Set the pixel in the bitmap.
-			bitmap_set(bm,i,j,iters);
+			bitmap_set((NewArgg->bm),i,j,iters);
 		}
 	}
 }
