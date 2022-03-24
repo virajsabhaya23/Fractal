@@ -20,6 +20,7 @@ int iteration_to_color(int i, int max);
 int iterations_at_point(double x, double y, int max);
 void *compute_image(void *argg);
 
+//DECLARING IT GLOBALLY SO CAN BE USED INSIDE COMPUTE_IMAGE
 int NumOfThreads = 1;
 
 // CREATED A STRUCTURE OF ALL THE PARAMETERS OF COMPUTE_IMAGE TO ASSIGN THE ARGS TO EACH THREAD
