@@ -23,6 +23,9 @@ the command line options with <code>mandel -h</code>, and use them to override t
 value or runs for <i>max</i> iterations.
 - Then, the pixel is assigned a color according to the number of iterations completed. An easy color scheme is to assign a gray value proportional to the number of iterations. The max value controls the amount of work done by the algorithm. If we increase max, then we can see much more detail in the set, but it may take much longer to compute.<br>
  <br>
+ 
+ ---
+
 - Some reference Code to playe with :)<br>
   <code>./mandel -x -0.5 -y 0 -s 2 -o mandel1.bmp</code><br>
   <code>./mandel -x -0.5 -y -0.5 -s 1 -o mandel2.bmp</code><br>
@@ -34,3 +37,10 @@ value or runs for <i>max</i> iterations.
   <code>./mandel -x 0.286932 -y 0.014287 -s .0005 -m 500 -o mandel3.bmp</code><br>
   <code>./mandel -x 0.286932 -y 0.014287 -s .0005 -m 1000 -o mandel4.bmp</code><br>
   <code>./mandel -x 0.286932 -y 0.014287 -s .0005 -m 2000 -o mandel5.bmp</code><br>
+
+---
+### Example of the Images Processed : 
+
+| <img src="mandelPattern.bmp"> | <img src="mandelPattern2.bmp"> |
+|:------------------------------|-------------------------------:|
+| <img src="mandelPattern3.bmp"> | <img src="mandelPattern4.bmp"> |

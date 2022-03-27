@@ -1,7 +1,7 @@
 /*
 	Viraj Sabhaya
 	UTA ID : 1001828871
-
+	
 	NOTE: ALL CAPITALIZE COMMENTS ARE THE CHANGES I MADE :)
 */
 
@@ -147,6 +147,8 @@ int main(int argc, char *argv[])
 		argg[i].max = max;
 		argg[i].threadId = i;
 
+		
+
 		// THIS USES THE PTHREAD API AND IS RESPONSIBLE FOR CREATING THREADS.
 		pthread_create(&ThreadsArray[i], NULL, compute_image, (void *)&argg[i]);
 	}
@@ -159,7 +161,6 @@ int main(int argc, char *argv[])
 		pthread_join(ThreadsArray[j], NULL);
 	}
 
-	// Save the image in the stated file.
 	if (!bitmap_save(bm, outfile))
 	{
 		fprintf(stderr, "mandel: couldn't write to %s: %s\n", outfile, strerror(errno));
